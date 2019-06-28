@@ -212,7 +212,9 @@ analise <- drake_plan(
   Favoritos_dos_Viajantes = xml_nodeset_to_df(Favoritos_Nodeset),
   
   # Baixando os Comentários de cada atração
-  df_TripAdvisorSC = bind_attractions(df_favoritos = Favoritos_dos_Viajantes)
+  df_TripAdvisorSC1 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[11:20,]),
+  df_TripAdvisorSC2 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[1:10,]),
+  df_TripAdvisorSC3 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[21:30,])
 )
 
 config <- drake_config(analise) 
@@ -227,5 +229,5 @@ make(analise)
 
 readd("df_TripAdvisorSC") %>% 
   as_tibble() -> df_TripAdvisorSC
+df_TripAdvisorSC %>% glimpse()
 
-View(df_TripAdvisorSC)
