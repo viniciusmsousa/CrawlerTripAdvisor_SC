@@ -132,7 +132,7 @@ get_attraction <- function(attraction,link){
   
 }
 
-# Bind Attractions vetorizado, mas sem acompanhar iteracoes
+# bind_attraction vetorizado, mas sem acompanhar o progresso
 # bind_attractions <- function(df_favoritos,
 #                              col_links = "Link",
 #                              col_nome = "Nome"){
@@ -152,6 +152,7 @@ get_attraction <- function(attraction,link){
 # }
 
 
+# bind_attraction sem ser vetorixado, mas acompanhando o progresso
 bind_attractions <- function(df_favoritos,
                              col_links = "Link",
                              col_nome = "Nome"){
