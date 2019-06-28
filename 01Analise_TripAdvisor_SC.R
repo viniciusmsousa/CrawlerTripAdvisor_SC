@@ -23,28 +23,22 @@ xml_nodeset_to_df <- function(xml_nodeset){
 
 get_last_page <- function(html){
   
-  pages_data <- html %>% 
-    # The '.' indicates the class
+  pages_data <- html %>%
     html_nodes('.pageNum.last.taLnk') %>% 
-    # Extract the raw text as a list
     html_text()                   
   
-  # The second to last of the buttons is the one
+  
   pages_data[(length(pages_data)-1)] %>%            
-    # Take the raw string
-    unname() %>%                                     
-    # Convert to number
+    unname() %>%     
     as.numeric()                                     
 }
 
 get_reviews <- function(html){
   html %>% 
-    # The relevant tag
+    
     html_nodes('.partial_entry') %>%      
-    html_text() %>% 
-    # Trim additional white space
+    html_text() %>%
     str_trim() %>%     
-    # Convert the list into a vector
     unlist() 
 }
 
@@ -81,7 +75,7 @@ get_review_title <- function(html){
 
 get_data_table <- function(html, tourist_attraction){
   
-  # Extract the Basic information from the HTML
+  # Extraindo informação basica do html
   reviews <- get_reviews(html)
   reviewer_names <- get_reviewer_names(html)
   dates <- get_review_dates(html)
@@ -89,21 +83,20 @@ get_data_table <- function(html, tourist_attraction){
   locations <- get_reviewer_location(html)
   
   
-  # Combine into a tibble
+  # cobinando em um tibble
   combined_data <- tibble(reviewer = reviewer_names,
                           date = dates[1:length(reviewer_names)],
                           review = reviews[1:length(reviewer_names)],
                           title = titles[1:length(reviewer_names)],
                           location = locations[1:length(reviewer_names)]) 
   
-  # Tag the individual data with the company name
+  # Adicionando a coluna com o nome da atracao
   combined_data %>% 
     mutate(Attraction = tourist_attraction) %>% 
     select(Attraction, reviewer, location,date,title ,review)
 }
 
 get_data_from_url <- function(url, tourist_attraction){
-  #pb$tick()$print()
   html <- read_html(url)
   get_data_table(html, tourist_attraction)
 }
@@ -116,8 +109,8 @@ get_attraction <- function(attraction,link){
   first_page <- read_html(url)
   
   # Extrair numero de páginas
-  latest_page_number <- 2
-  #latest_page_number <- get_last_page(first_page)
+  #latest_page_number <- 2
+  latest_page_number <- get_last_page(first_page)
   
   # Criando urls de interesse
   breaked_url <- str_split(url,"Reviews-",simplify = T)
@@ -154,7 +147,7 @@ bind_attractions <- function(df_favoritos,
   return(df)
   
 }
-# Fucoes para ler e preparar os dados
+# Funcoes para ler e preparar os dados
 
 montar_df <- function(pasta){
   
@@ -220,9 +213,7 @@ analise <- drake_plan(
   Favoritos_dos_Viajantes = xml_nodeset_to_df(Favoritos_Nodeset),
   
   # Baixando os Comentários de cada atração
-  df_TripAdvisorSC = bind_attractions(
-    df_favoritos = Favoritos_dos_Viajantes
-  )
+  df_TripAdvisorSC = bind_attractions(df_favoritos = Favoritos_dos_Viajantes)
 )
 
 config <- drake_config(analise) 
