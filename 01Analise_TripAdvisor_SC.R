@@ -109,7 +109,7 @@ get_attraction <- function(attraction,link){
   first_page <- read_html(url)
   
   # Extrair numero de páginas
-  #latest_page_number <- 2
+  #latest_page_number <- 5
   latest_page_number <- get_last_page(first_page)
   
   # Criando urls de interesse
@@ -120,15 +120,37 @@ get_attraction <- function(attraction,link){
                                #seq(from=10,to=40,by=10),
                                '-',
                                breaked_url[2]))
-  
+  plan(multiprocess)
   # extraindo o comentário de cada pagina e depois dando o 'bind' em uma coluna
   list_of_pages %>% 
     # aplicar em todas urls
     future_map(get_data_from_url, tourist_attraction,.progress = T) %>%  
     # combinando em uma tabela
-    bind_rows() -> df_atracao                          
+    bind_rows() -> df_atracao     
+  
+  return(df_atracao)
   
 }
+
+# Bind Attractions vetorizado, mas sem acompanhar iteracoes
+# bind_attractions <- function(df_favoritos,
+#                              col_links = "Link",
+#                              col_nome = "Nome"){
+#   
+#   nomes <- unlist(df_favoritos[1:5,col_nome])
+#   links <- unlist(df_favoritos[1:5,col_links])
+#   
+#   list_of_dfs <- vector(mode = "list",length = length(links))
+#   names(list_of_dfs) <- nomes
+#   
+#   plan(sequential)
+#   future_map2(nomes,links,get_attraction,.progress = T) %>% 
+#     bind_rows() -> df
+#   
+#   return(df)
+#   
+# }
+
 
 bind_attractions <- function(df_favoritos,
                              col_links = "Link",
@@ -140,46 +162,22 @@ bind_attractions <- function(df_favoritos,
   list_of_dfs <- vector(mode = "list",length = length(links))
   names(list_of_dfs) <- nomes
   
-  plan(sequential)
-  future_map2(nomes,links,get_attraction,.progress = T) %>% 
-    bind_rows() -> df
   
-  return(df)
+  for(i in seq_along(nomes)){
+    print(paste0("Atração '",nomes[i],"' (",i," de ",length(nomes),")"))
+    get_attraction(attraction = nomes[i],
+                   link = links[i]) -> df_attraction
+    
+    list_of_dfs[[i]] <- df_attraction
+  } 
+  
+  df_final <- bind_rows(list_of_dfs)
+  return(df_final)
   
 }
+
 # Funcoes para ler e preparar os dados
 
-montar_df <- function(pasta){
-  
-  tsv_files <- list.files(path = pasta,pattern = "tsv")
-  files <- paste0(pasta,"/",tsv_files)
-  df <- apply(X = rbindlist(lapply(files, read_tsv)),
-              MARGIN = 2,
-              FUN = iconv,
-              from="UTF-8",
-              to="ASCII//TRANSLIT") %>% 
-    as_tibble()
-  
-  review_preprocessed <- df %>% 
-    select("review") %>% 
-    unlist() %>% 
-    # remove non-alphanumeric symbols
-    str_replace_all(.,"[^[:alnum:]]", " ") %>% 
-    # collapse multiple spaces
-    str_replace_all(.,"\\s+", " ") %>%
-    #remove any numeric characters
-    str_replace_all(.,"[[:digit:]]", "") %>%
-    #remove punctuation
-    str_replace_all(.,"[[:punct:]]","") %>%
-    #remove stop words
-    removeWords(.,stopwords("pt")) %>%
-    #trim text
-    str_trim(.,side=c("both"))
-  
-  df %>% 
-    mutate(review_cleaned = review_preprocessed) 
-  return(df)
-}
 
 mes <- tibble(month =c("janeiro","fevereiro","março","abril","maio","junho","julho",
                        "agosto","setembro","outubro","novembro","dezembro"),
@@ -222,7 +220,11 @@ vis_drake_graph(config,
 make(analise)
 
 
-# rascunho ----------------------------------------------------------------
 
-# salvar arquivo "https://ropensci.github.io/drake/reference/file_out.html"
+# Rascunho ----------------------------------------------------------------
 
+
+readd("df_TripAdvisorSC") %>% 
+  as_tibble() -> df_TripAdvisorSC
+
+View(df_TripAdvisorSC)
