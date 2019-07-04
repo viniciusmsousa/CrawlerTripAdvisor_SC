@@ -528,7 +528,18 @@ b[[3]]
 
 
 
+df_TripAdvisorSC$data <- fix_date(df_TripAdvisorSC$date) 
+df_TripAdvisorSC
 
 
+df_sent <- df_TripAdvisorSC %>% 
+  unnest_tokens(palavra, review) %>% 
+  inner_join(sentiLex_lem_PT02, by = c("palavra" = "term")) %>%
+  select(c(Attraction,polarity))
+  #group_by(Attraction) %>% 
+  mutate(
+    sentimento_soma = sum(polarity),
+    sentimento_media = mean(polarity)
+  ) %>% glimpse()
 
 
