@@ -508,10 +508,27 @@ df_sent %>%
 
 
 readd("SearchK") -> SearchK
+readd("fitted") -> fitted
+
+labelTopics(fitted)
 
 
-SearchK$results[max(SearchK$results$exclus),]
+readd("df_TripAdvisorSC") -> df_TripAdvisorSC
+
+library(quanteda)
+df_TripAdvisorSC[1:5,] -> a
+a
+adjs <- unlist(sentiLex_lem_PT02[sentiLex_lem_PT02$grammar_category =="Adj",1])
+
+
+tokens_keep(x = tokens(a$review),
+              adjs) -> b
+str(b)
+b[[3]]
 
 
 
-which(min(SearchK$results$exclus))
+
+
+
+
