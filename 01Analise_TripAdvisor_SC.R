@@ -109,8 +109,8 @@ get_attraction <- function(attraction,link){
   first_page <- read_html(url)
   
   # Extrair numero de páginas
-  #latest_page_number <- 5
-  latest_page_number <- get_last_page(first_page)
+  latest_page_number <- 10
+  #latest_page_number <- get_last_page(first_page)
   
   # Criando urls de interesse
   breaked_url <- str_split(url,"Reviews-",simplify = T)
@@ -177,10 +177,30 @@ bind_attractions <- function(df_favoritos,
   
 }
 
-# Funcoes para ler e preparar os dados
 
 
-mes <- tibble(month =c("janeiro","fevereiro","março","abril","maio","junho","julho",
+# Funcoes para preparar os dados
+
+stop_words_pt_e_personal <- function(dataframe,n_terms_remove = 50){
+  # A coluna com o texto deve ter o nome "review" por enquanto
+  
+  sw_pt_tm <- stopwords("pt")
+  
+  dataframe %>% 
+    unnest_tokens(palavra,review) %>% 
+    filter(!palavra %in% sw_pt_tm) %>%
+    count(palavra) %>% 
+    head(n_terms_remove) %>% 
+    unlist() -> minhas_sw
+  
+  sw_pt <- c(sw_pt_tm,minhas_sw)
+  
+  return(sw_pt)
+  
+}
+
+
+mes <- tibble(month = c("janeiro","fevereiro","março","abril","maio","junho","julho",
                        "agosto","setembro","outubro","novembro","dezembro"),
               month_number = 1:12)
 
@@ -214,20 +234,38 @@ analise <- drake_plan(
   # Baixando os Comentários de cada atração
   df_TripAdvisorSC1 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[11:20,]),
   df_TripAdvisorSC2 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[1:10,]),
-  df_TripAdvisorSC3 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[21:30,])
+  df_TripAdvisorSC3 = bind_attractions(df_favoritos = Favoritos_dos_Viajantes[21:30,]),
+  # Juntando os data frames
+  df_TripAdvisorSC = bind_rows(list(
+    df_TripAdvisorSC1, 
+    df_TripAdvisorSC2, 
+    df_TripAdvisorSC3)),
+  
+  ## Topic Modeling
+  stopwords = stop_words_pt_e_personal(df_TripAdvisorSC),
+  processe_corpus = textProcessor(df_TripAdvisorSC$review,
+                                   metadata = df_TripAdvisorSC[,c(1,6)],
+                                   language = "portuguese",
+                                   customstopwords = stopwords),
+  processed_corpus = prepDocuments(processe_corpus$documents, 
+                                   processe_corpus$vocab, 
+                                   processe_corpus$meta,
+                                   lower.thresh = 10),
+  SearchK = searchK(processed_corpus$documents,
+                    processed_corpus$vocab,
+                    K = c(3:6),
+                    data = processed_corpus$meta),
+  fitted = stm(
+    documents = processed_corpus$documents, vocab = processed_corpus$vocab,
+    data = processed_corpus$meta,  
+    K = SearchK$results[which.max(SearchK$results$exclus),1],max.em.its = 75,
+    init.type = "Spectral", verbose = FALSE
+  )
+  
 )
 
 config <- drake_config(analise) 
 vis_drake_graph(config,
                 main = "Fluxo do Projeto TripAdvisor SC")
 make(analise)
-
-
-
-# Rascunho ----------------------------------------------------------------
-
-
-readd("df_TripAdvisorSC") %>% 
-  as_tibble() -> df_TripAdvisorSC
-df_TripAdvisorSC %>% glimpse()
 

@@ -418,3 +418,100 @@ get_data_from_url <- function(url, tourist_attraction){
   html <- read_html(url)
   get_data_table(html, tourist_attraction)
 }
+
+
+
+######
+favoritos_dos_viajantes <- readd("favoritos_dos_viajantes")
+
+
+
+
+
+# Rascunho ----------------------------------------------------------------
+
+
+readd("df_TripAdvisorSC1") %>% 
+  as_tibble() -> df_TripAdvisorSC1
+
+readd("df_TripAdvisorSC2") %>% 
+  as_tibble() -> df_TripAdvisorSC2
+
+readd("df_TripAdvisorSC3") %>% 
+  as_tibble() -> df_TripAdvisorSC3
+
+bind_rows(list(df_TripAdvisorSC1,
+               df_TripAdvisorSC2,
+               df_TripAdvisorSC3)) -> df_TripAdvisorSC
+df_TripAdvisorSC
+
+## Encontrando Tópicos
+
+# stop words
+
+library(tidytext)
+dataframe <- df_TripAdvisorSC
+rm(dataframe)
+
+
+
+a <- stop_words_pt_e_personal(dataframe = df_TripAdvisorSC)
+a
+
+
+
+
+
+
+
+
+
+
+
+
+library(lexiconPT)
+library(tidytext)
+data("sentiLex_lem_PT02")
+dict <- unique(sentiLex_lem_PT02)
+
+# criacao do dataframe de sentimento por topico
+df_sent <- df_TripAdvisorSC %>% 
+  unnest_tokens(palavra, review) %>% 
+  inner_join(sentiLex_lem_PT02, by = c("palavra" = "term")) %>% 
+  group_by(Attraction) %>% 
+  mutate(
+    sentimento_soma = sum(polarity),
+    sentimento_media = mean(polarity)
+  )
+df_sent %>% 
+  glimpse()
+
+
+library(ggplot2)
+library(ggridges)
+Attraction
+roxo <- "#B2F4D2"
+sent_medio_geral <- mean(df_sent$sentimento_media)
+df_sent %>% 
+  ungroup() %>%
+  #  filter(Attraction %in% unique(df_sent$Attraction)[1:10]) %>% 
+  mutate(Attraction = forcats::fct_reorder(Attraction, sentimento_media, median)) %>% 
+  ggplot(aes(x = sentimento_media, y = Attraction)) +
+  #facet_wrap( ~ Attraction, ncol=2)+
+  geom_density_ridges_gradient(fill = roxo) +
+  geom_vline(xintercept = sent_medio_geral, linetype = "dashed",size=1) +
+  theme_minimal() +
+  labs(x = "Sentimento", y = NULL,
+       title = "Distribuição dos sentimentos por tópico") 
+
+
+
+
+readd("SearchK") -> SearchK
+
+
+SearchK$results[max(SearchK$results$exclus),]
+
+
+
+which(min(SearchK$results$exclus))
