@@ -8,10 +8,6 @@ df_TripAdvisorSC <- readd("df_TripAdvisorSC")
 # UI ----------------------------------------------------------------------
 
 dbHeader <- dashboardHeader(title = "TripAdvisor SC",
-                            tags$li(a(href = 'http://github.com/viniciusmsousa',
-                                      'Powered by Vinicius M. de Sousa',
-                                      style = "padding-top:10px; padding-bottom:10px;"),
-                                    class = "dropdown"),
                             titleWidth = Title_SideBar_width)
 
 SideBar <- dashboardSidebar(

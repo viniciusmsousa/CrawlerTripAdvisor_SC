@@ -2,6 +2,36 @@
 
 source("00Packages.R")
 
+# bind_attraction vetorizado, mas sem acompanhar o progresso
+# bind_attractions <- function(df_favoritos,
+#                              col_links = "Link",
+#                              col_nome = "Nome"){
+#   
+#   nomes <- unlist(df_favoritos[1:5,col_nome])
+#   links <- unlist(df_favoritos[1:5,col_links])
+#   
+#   list_of_dfs <- vector(mode = "list",length = length(links))
+#   names(list_of_dfs) <- nomes
+#   
+#   plan(sequential)
+#   future_map2(nomes,links,get_attraction,.progress = T) %>% 
+#     bind_rows() -> df
+#   
+#   return(df)
+#   
+# }
+
+
+
+
+
+
+
+
+
+
+
+
 # Funções para Scraping
 
 xml_nodeset_to_df <- function(xml_nodeset){
@@ -471,9 +501,27 @@ a
 
 library(lexiconPT)
 library(tidytext)
-data("sentiLex_lem_PT02")
-dict <- unique(sentiLex_lem_PT02)
 
+dict <- unique(data("sentiLex_lem_PT02"))
+
+
+
+compute_sentiment <- function(df){
+  
+  df %>% 
+    unnest_tokens(palavra, review) %>% 
+    inner_join(sentiLex_lem_PT02, by = c("palavra" = "term")) %>% 
+    group_by(Attraction) %>% 
+    mutate(
+      sentimento_soma = sum(polarity),
+      sentimento_media = mean(polarity)
+    ) -> df_sentimento
+  
+  return(df_sentimento)
+}
+
+df_TripAdvisorSC <- readd("df_TripAdvisorSC")
+View(df_TripAdvisorSC)
 # criacao do dataframe de sentimento por topico
 df_sent <- df_TripAdvisorSC %>% 
   unnest_tokens(palavra, review) %>% 

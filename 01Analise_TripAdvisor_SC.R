@@ -109,7 +109,7 @@ get_attraction <- function(attraction,link){
   first_page <- read_html(url)
   
   # Extrair numero de páginas
-  latest_page_number <- 10
+  latest_page_number <- 5
   #latest_page_number <- get_last_page(first_page)
   
   # Criando urls de interesse
@@ -131,25 +131,6 @@ get_attraction <- function(attraction,link){
   return(df_atracao)
   
 }
-
-# bind_attraction vetorizado, mas sem acompanhar o progresso
-# bind_attractions <- function(df_favoritos,
-#                              col_links = "Link",
-#                              col_nome = "Nome"){
-#   
-#   nomes <- unlist(df_favoritos[1:5,col_nome])
-#   links <- unlist(df_favoritos[1:5,col_links])
-#   
-#   list_of_dfs <- vector(mode = "list",length = length(links))
-#   names(list_of_dfs) <- nomes
-#   
-#   plan(sequential)
-#   future_map2(nomes,links,get_attraction,.progress = T) %>% 
-#     bind_rows() -> df
-#   
-#   return(df)
-#   
-# }
 
 
 # bind_attraction sem ser vetorixado, mas acompanhando o progresso
@@ -255,17 +236,15 @@ analise <- drake_plan(
                     processed_corpus$vocab,
                     K = c(3:6),
                     data = processed_corpus$meta),
-  fitted = stm(
+  Similaridade_Comentarios = stm(
     documents = processed_corpus$documents, vocab = processed_corpus$vocab,
     data = processed_corpus$meta,  
     K = SearchK$results[which.max(SearchK$results$exclus),1],max.em.its = 75,
     init.type = "Spectral", verbose = FALSE
   )
-  
 )
 
 config <- drake_config(analise) 
 vis_drake_graph(config,
                 main = "Fluxo do Projeto TripAdvisor SC")
 make(analise)
-
